@@ -77,3 +77,10 @@ socket.on('connection', function(client){
   });
 }); 
 
+gameLoop = function() {
+	setTimeout(gameLoop,1000/12);
+  	socket.broadcast((20*w+20)+"|"+'^'.charCodeAt(0)+'|'+Math.random()+'|0|0');
+}
+
+
+setTimeout(gameLoop,1000);
