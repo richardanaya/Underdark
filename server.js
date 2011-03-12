@@ -20,7 +20,7 @@ var app = [
 ];
 
 var server = nerve.create(app, {session_duration: 10000, document_root: './static'})
-server.listen(8779);
+server.listen(8868);
 
 
 var w = 40;
