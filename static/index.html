@@ -1,0 +1,91 @@
+<html> 
+<head> 
+	<script type="text/javascript" src="js/SpriteEngine-min.js"></script> 
+	<script src="/socket.io/socket.io.js"></script> 
+	<style>
+			body {
+				background-color: #25272b;
+				color: white;
+			}	
+	</style>
+</head>
+<body>
+<center>
+<div width="600">
+<canvas id="content_screen" style="border: none;" width="600" height="375"></canvas><br/>
+WASD - up,left,right,down
+</div>
+</center>
+<script> 
+	//Setting up
+	var engine = new SpriteEngine();
+	engine.initialize('content_screen');
+
+	//Load texture
+	var fontRenderer = new FontRenderer(engine,"img/font.png");
+
+
+	var xd = 15;
+	var yd = 15;
+	var w = 40;
+	var h = 25;
+	var symbols = [];
+	var colors_r = [];
+	var colors_g = [];
+	var colors_b = [];
+	for(var i = 0 ; i < w*h; i++ ) {
+		symbols[i] = ' ';
+		colors_r[i] = 0;
+		colors_g[i] = 0;
+		colors_b[i] = 0;
+	}
+
+	engine.keyDown = function(keyCode) {
+		if( keyCode == 65 ) //A
+		{
+			socket.send('0');		
+		}
+		else if( keyCode == 87 ) //W
+		{
+			socket.send('1');		
+		}
+		else if( keyCode == 68 ) //D
+		{
+			socket.send('2');		
+		}
+		else if( keyCode == 83 ) //S
+		{
+			socket.send('3');		
+		}
+
+	}
+
+	//Interesting stuff
+	render_loop = function() {
+		engine.setView();
+		engine.clear();
+		engine.setAlpha(0.7);
+		if( fontRenderer.loaded ) {
+			for(var y = h-1; y >= 0 ; y--) {
+				for( var x = w-1; x >= 0; x--) {
+					engine.setTint(colors_r[y*w+x],colors_g[y*w+x],colors_b[y*w+x]);
+					fontRenderer.drawText(symbols[y*w+x],x*xd,y*yd);
+				}
+			}
+		}
+	}
+	
+	engine.start(render_loop,60);
+	var socket = new io.Socket(null, {port: 80, rememberTransport: false}); 
+ 	socket.connect();
+ 	socket.on('message', function(data){ 
+		var cmd = data.split('|');
+		var i = parseFloat(cmd[0]);
+		symbols[i] = String.fromCharCode(parseFloat(cmd[1]));
+		colors_r[i] = parseFloat(cmd[2]);
+		colors_g[i] = parseFloat(cmd[3]);
+		colors_b[i] = parseFloat(cmd[4]);
+	}) 
+</script> 
+</body> 
+</html> 
