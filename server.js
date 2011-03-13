@@ -64,9 +64,9 @@ var clientCount = 0;
  
 socket.on('connection', function(client){
   for(var i = 0 ; i < w*h; i++ ) {
-	client.send(CMD_SENDCHAR+'|'+i+"|"+symbols[i]+'|'+colors_r[i]+"|"+colors_g[i]+"|"+colors_b[i]);
+	client.send(CMD_SENDCHAR+'|'+i+"|"+symbols[i].charCodeAt(0)+'|'+colors_r[i]+"|"+colors_g[i]+"|"+colors_b[i]);
   }
-  client.send(CMD_SENDCHAR+'|'+(playerY*w+playerX)+"|"+playerSymbol+'|1|1|1');
+  client.send(CMD_SENDCHAR+'|'+(playerY*w+playerX)+"|"+playerSymbol.charCodeAt(0)+'|1|1|1');
  
   client.on('message', function(data){ 
 	var cmd = data.split('|');
