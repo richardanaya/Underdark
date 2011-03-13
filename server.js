@@ -40,6 +40,7 @@ var playerX = 0;
 var playerY = 0;
 var playerName = "";
 var playerSymbol = '@';
+var playerClient = null;
 
 var CMD_SENDCHAR = 0;
 var CMD_MSG = 1;
@@ -100,7 +101,8 @@ socket.on('connection', function(client){
 	}
 	else if( cmd_type == 5 ) //login 
 	{
-		playerName = cmd[1];	
+		playerName = cmd[1];
+		playerClient = client;	
 		sendMessage(client,'Welcome '+playerName);
 	}
   });
@@ -116,6 +118,11 @@ gameLoop = function() {
 	for(var i = 0,len=desiredMovements.length;i<len;i++) {
 		playerX += desiredMovements[i].x;
 		playerY += desiredMovements[i].y;
+		if( playerX == 20 && playerY == 20 ) {
+			if( playerClient != null ) {
+				sendMessage(playerClient,'You stepped on a <font color="red">fire</font>');
+			}
+		}
 	}
 
 
