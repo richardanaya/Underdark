@@ -30,7 +30,7 @@ var colors_r = [];
 var colors_g = [];
 var colors_b = [];
 for(var i = 0 ; i < w*h; i++ ) {
-	symbols[i] = '#'.charCodeAt(0);
+	symbols[i] = '#';
 	colors_r[i] = 0;
 	colors_g[i] = Math.random();
 	colors_b[i] = 0;
@@ -39,7 +39,7 @@ for(var i = 0 ; i < w*h; i++ ) {
 var playerX = 0;
 var playerY = 0;
 var playerName = "";
-var playerSymbol = '@'.charCodeAt(0);
+var playerSymbol = '@';
 
 var CMD_SENDCHAR = 0;
 var CMD_MSG = 1;
@@ -50,7 +50,7 @@ sendMessage = function(client,msg) {
 }
 
 sendCharacter = function(client,x,y,symbol,r,g,b) {
-  	client.broadcast(CMD_SENDCHAR+'|'+(y*w+x)+"|"+symbol+'|'+r+'|'+g+'|'+b);
+  	client.broadcast(CMD_SENDCHAR+'|'+(y*w+x)+"|"+symbol.charCodeAt(0)+'|'+r+'|'+g+'|'+b);
 }
 
 sendMapCharacter = function(client,x,y) {
@@ -58,7 +58,10 @@ sendMapCharacter = function(client,x,y) {
 	sendCharacter(socket,x,y,symbols[i],colors_r[i],colors_g[i],colors_b[i]);	
 }
 
-var socket = io.listen(server); 
+var socket = io.listen(server);
+
+var clientCount = 0;
+ 
 socket.on('connection', function(client){
   for(var i = 0 ; i < w*h; i++ ) {
 	client.send(CMD_SENDCHAR+'|'+i+"|"+symbols[i]+'|'+colors_r[i]+"|"+colors_g[i]+"|"+colors_b[i]);
