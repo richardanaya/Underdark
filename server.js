@@ -54,13 +54,15 @@ sendCharacter = function(client,x,y,symbol,r,g,b) {
 }
 
 sendMapCharacter = function(client,x,y) {
-	var i = x*w+y;
+	var i = y*w+x;
 	sendCharacter(socket,x,y,symbols[i],colors_r[i],colors_g[i],colors_b[i]);	
 }
 
 var socket = io.listen(server);
 
 var clientCount = 0;
+
+var desiredMovements = [];
  
 socket.on('connection', function(client){
   for(var i = 0 ; i < w*h; i++ ) {
@@ -71,21 +73,26 @@ socket.on('connection', function(client){
   client.on('message', function(data){ 
 	var cmd = data.split('|');
 	var cmd_type = parseFloat(cmd[0]);
+	var desiredMovement = { x:0, y:0 }
 	if( cmd_type == 0 ) //move left 
 	{
-		playerX--;
+		desiredMovement.x--;
+		desiredMovements.push(desiredMovement);
 	}
 	else if( cmd_type == 1 ) //move up 
 	{
-		playerY--;
+		desiredMovement.y--;
+		desiredMovements.push(desiredMovement);
 	}
 	else if( cmd_type == 2 ) //move right 
 	{
-		playerX++;
+		desiredMovement.x++;
+		desiredMovements.push(desiredMovement);
 	}
 	else if( cmd_type == 3 ) //move down 
 	{
-		playerY++;
+		desiredMovement.y++;
+		desiredMovements.push(desiredMovement);
 	}
 	else if( cmd_type == 4 ) //pickup an item 
 	{
@@ -102,10 +109,35 @@ socket.on('connection', function(client){
 var FPS = 12.5;
 
 gameLoop = function() {
-	//var i = oldY*w+oldX;
-	//sendMapCharacter(socket,oldX,oldY);	
+	//Process actions since last frame
+	var lastPlayerX = playerX;
+	var lastPlayerY = playerY;
+	
+	for(var i = 0,len=desiredMovements.length;i<len;i++) {
+		playerX += desiredMovements[i].x;
+		playerY += desiredMovements[i].y;
+	}
+
+
+	if( playerX < 0 ) {
+		playerX = 0;	
+	}
+	else if( playerX >= w ) {
+		playerX = w-1;	
+	}
+	if( playerY < 0 ) {
+		playerY = 0;	
+	}
+	else if( playerY >= h ) {
+		playerY = h-1;	
+	}
+
+	desiredMovements = [];
+	
+	sendMapCharacter(socket,lastPlayerX,lastPlayerY);
 	sendCharacter(socket,20,20,'^',Math.random(),0,0);	
 	sendCharacter(socket,playerX,playerY,playerSymbol,1,1,1);	
+	
 	setTimeout(gameLoop,1000/FPS);
 }
 
