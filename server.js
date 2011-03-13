@@ -25,12 +25,12 @@ server.listen(8868);
 
 var w = 40;
 var h = 25;
-var colors_c = [];
+var symbols = [];
 var colors_r = [];
 var colors_g = [];
 var colors_b = [];
 for(var i = 0 ; i < w*h; i++ ) {
-	colors_c[i] = '#'.charCodeAt(0);
+	symbols[i] = '#'.charCodeAt(0);
 	colors_r[i] = 0;
 	colors_g[i] = Math.random();
 	colors_b[i] = 0;
@@ -38,20 +38,36 @@ for(var i = 0 ; i < w*h; i++ ) {
 
 var playerX = 0;
 var playerY = 0;
+var playerName = "";
 var playerSymbol = '@'.charCodeAt(0);
+
+var CMD_SENDCHAR = 0;
+var CMD_MSG = 1;
+
+
+sendMessage = function(client,msg) {
+	client.send(CMD_MSG+'|'+msg);	
+}
+
+sendCharacter = function(client,x,y,symbol,r,g,b) {
+  	client.broadcast(CMD_SENDCHAR+'|'+(y*w+x)+"|"+symbol+'|'+r+'|'+g+'|'+b);
+}
+
+sendMapCharacter = function(client,x,y) {
+	var i = x*w+y;
+	sendCharacter(socket,x,y,symbols[i],colors_r[i],colors_g[i],colors_b[i]);	
+}
 
 var socket = io.listen(server); 
 socket.on('connection', function(client){
   for(var i = 0 ; i < w*h; i++ ) {
-	client.send(i+"|"+colors_c[i]+'|'+colors_r[i]+"|"+colors_g[i]+"|"+colors_b[i]);
+	client.send(CMD_SENDCHAR+'|'+i+"|"+symbols[i]+'|'+colors_r[i]+"|"+colors_g[i]+"|"+colors_b[i]);
   }
-  client.send((playerY*w+playerX)+"|"+playerSymbol+'|1|1|1');
+  client.send(CMD_SENDCHAR+'|'+(playerY*w+playerX)+"|"+playerSymbol+'|1|1|1');
  
   client.on('message', function(data){ 
 	var cmd = data.split('|');
 	var cmd_type = parseFloat(cmd[0]);
-	var oldX = playerX;
-	var oldY = playerY;
 	if( cmd_type == 0 ) //move left 
 	{
 		playerX--;
@@ -68,19 +84,27 @@ socket.on('connection', function(client){
 	{
 		playerY++;
 	}
-
-	var i = oldY*w+oldX;
-  	client.broadcast((playerY*w+playerX)+"|"+playerSymbol+'|1|1|1');
-	client.broadcast(i+"|"+colors_c[i]+'|'+colors_r[i]+"|"+colors_g[i]+"|"+colors_b[i]);
-  	client.send((playerY*w+playerX)+"|"+playerSymbol+'|1|1|1');
-	client.send(i+"|"+colors_c[i]+'|'+colors_r[i]+"|"+colors_g[i]+"|"+colors_b[i]);
+	else if( cmd_type == 4 ) //pickup an item 
+	{
+		sendMessage(client,'You tried to pickup something.');
+	}
+	else if( cmd_type == 5 ) //login 
+	{
+		playerName = cmd[1];	
+		sendMessage(client,'Welcome '+playerName);
+	}
   });
 }); 
 
+var FPS = 12.5;
+
 gameLoop = function() {
-	setTimeout(gameLoop,1000);
-  	socket.broadcast((20*w+20)+"|"+'^'.charCodeAt(0)+'|'+Math.random()+'|0|0');
+	//var i = oldY*w+oldX;
+	//sendMapCharacter(socket,oldX,oldY);	
+	sendCharacter(socket,20,20,'^',Math.random(),0,0);	
+	sendCharacter(socket,playerX,playerY,playerSymbol,1,1,1);	
+	setTimeout(gameLoop,1000/FPS);
 }
 
 
-setTimeout(gameLoop,1000);
+setTimeout(gameLoop,1000/FPS);

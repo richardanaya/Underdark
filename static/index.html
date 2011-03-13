@@ -1,6 +1,7 @@
 <html> 
 <head> 
 	<script type="text/javascript" src="js/SpriteEngine-min.js"></script> 
+	<script type="text/javascript" src="js/jquery.js"></script> 
 	<script src="/socket.io/socket.io.js"></script> 
 	<style>
 			body {
@@ -14,9 +15,16 @@
 <div width="600">
 <canvas id="content_screen" style="border: none;" width="600" height="375"></canvas><br/>
 WASD - up,left,right,down
+<div id="log" style="background-color: black; color: white; width: 600px;height:250px;overflow:auto;">
+
+</div>
 </div>
 </center>
 <script> 
+	log = function(msg) {
+		$('#log').prepend(msg+'<br/>');
+	}
+	
 	//Setting up
 	var engine = new SpriteEngine();
 	engine.initialize('content_screen');
@@ -57,7 +65,10 @@ WASD - up,left,right,down
 		{
 			socket.send('3');		
 		}
-
+		else if( keyCode == 71 ) //G
+		{
+			socket.send('4');		
+		}
 	}
 
 	//Interesting stuff
@@ -76,15 +87,23 @@ WASD - up,left,right,down
 	}
 	
 	engine.start(render_loop,60);
-	var socket = new io.Socket(null, {port: 80, rememberTransport: false}); 
+	var name = 'Grey Elf';//prompt('What is your character\'s name');
+	var socket = new io.Socket(null, {port: 8868, rememberTransport: false}); 
  	socket.connect();
+	socket.send('5|'+name);
  	socket.on('message', function(data){ 
 		var cmd = data.split('|');
-		var i = parseFloat(cmd[0]);
-		symbols[i] = String.fromCharCode(parseFloat(cmd[1]));
-		colors_r[i] = parseFloat(cmd[2]);
-		colors_g[i] = parseFloat(cmd[3]);
-		colors_b[i] = parseFloat(cmd[4]);
+		var cmd_type = parseFloat(cmd[0]);
+		if( cmd_type == 0 ) {
+			var i = parseFloat(cmd[1]);
+			symbols[i] = String.fromCharCode(parseFloat(cmd[2]));
+			colors_r[i] = parseFloat(cmd[3]);
+			colors_g[i] = parseFloat(cmd[4]);
+			colors_b[i] = parseFloat(cmd[5]);
+		}
+		else if( cmd_type == 1 ) {
+			log(cmd[1]);
+		}
 	}) 
 </script> 
 </body> 
