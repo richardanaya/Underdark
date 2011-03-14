@@ -1,7 +1,7 @@
-//
 var nun = require('nun');
 var nerve = require("./lib/nerve/nerve");
- var io = require('socket.io');
+var io = require('socket.io');
+var underdark = require('./underdark');
  
 var render = function(res,template,data) {
   if( data == undefined ) {
@@ -36,11 +36,18 @@ for(var i = 0 ; i < w*h; i++ ) {
 	colors_b[i] = 0;
 }
 
-var playerX = 0;
-var playerY = 0;
-var playerName = "";
-var playerSymbol = '@';
-var playerClient = null;
+var players = [];
+
+getPlayerByClient = function(client) {
+	for(var i = 0, len = players.length; i < len ; i++ ) {
+		var p = players[i];
+		if( p.client == client ) {
+			return p;
+		}
+	}
+	return null;
+}
+
 
 var CMD_SENDCHAR = 0;
 var CMD_MSG = 1;
@@ -61,39 +68,52 @@ sendMapCharacter = function(client,x,y) {
 
 var socket = io.listen(server);
 
-var clientCount = 0;
-
-var desiredMovements = [];
- 
 socket.on('connection', function(client){
   for(var i = 0 ; i < w*h; i++ ) {
 	client.send(CMD_SENDCHAR+'|'+i+"|"+symbols[i].charCodeAt(0)+'|'+colors_r[i]+"|"+colors_g[i]+"|"+colors_b[i]);
   }
-  client.send(CMD_SENDCHAR+'|'+(playerY*w+playerX)+"|"+playerSymbol.charCodeAt(0)+'|1|1|1');
+  for(var i = 0, len = players.length; i < len ; i++ ) {
+    var p = players[i];
+    client.send(CMD_SENDCHAR+'|'+(p.y*w+p.x)+"|"+p.symbol.charCodeAt(0)+'|1|1|1');
+  }
+
+  client.on('disconnect', function(data){ 
+  	for(var i = 0, len = players.length; i < len ; i++ ) {
+    		var p = players[i];
+		if( p.client == client ) {
+			players.splice(i,1);
+		}
+  	}
+  });
  
   client.on('message', function(data){ 
+	var p = getPlayerByClient(client);
+
 	var cmd = data.split('|');
 	var cmd_type = parseFloat(cmd[0]);
-	var desiredMovement = { x:0, y:0 }
 	if( cmd_type == 0 ) //move left 
 	{
-		desiredMovement.x--;
-		desiredMovements.push(desiredMovement);
+		if( p != null ) {
+			p.desireMove(-1,0);
+		}
 	}
 	else if( cmd_type == 1 ) //move up 
 	{
-		desiredMovement.y--;
-		desiredMovements.push(desiredMovement);
+		if( p != null ) {
+			p.desireMove(0,-1);
+		}
 	}
 	else if( cmd_type == 2 ) //move right 
 	{
-		desiredMovement.x++;
-		desiredMovements.push(desiredMovement);
+		if( p != null ) {
+			p.desireMove(1,0);
+		}
 	}
 	else if( cmd_type == 3 ) //move down 
 	{
-		desiredMovement.y++;
-		desiredMovements.push(desiredMovement);
+		if( p != null ) {
+			p.desireMove(0,1);
+		}
 	}
 	else if( cmd_type == 4 ) //pickup an item 
 	{
@@ -102,7 +122,7 @@ socket.on('connection', function(client){
 	else if( cmd_type == 5 ) //login 
 	{
 		playerName = cmd[1];
-		playerClient = client;	
+		players.push(new underdark.Player(client,playerName,0,0));
 		sendMessage(client,'Welcome '+playerName);
 	}
   });
@@ -111,40 +131,41 @@ socket.on('connection', function(client){
 var FPS = 12.5;
 
 gameLoop = function() {
-	//Process actions since last frame
-	var lastPlayerX = playerX;
-	var lastPlayerY = playerY;
+	for(var j = 0, plen = players.length; j<plen; j++) {
+		var p = players[j];
+		//Process actions since last frame
+		var lastPlayerX = p.x;
+		var lastPlayerY = p.y;
 	
-	for(var i = 0,len=desiredMovements.length;i<len;i++) {
-		playerX += desiredMovements[i].x;
-		playerY += desiredMovements[i].y;
-		if( playerX == 20 && playerY == 20 ) {
-			if( playerClient != null ) {
-				sendMessage(playerClient,'You stepped on a <font color="red">fire</font>');
+		for(var i = 0,len=p.desiredMovements.length;i<len;i++) {
+			p.x += p.desiredMovements[i].x;
+			p.y += p.desiredMovements[i].y;
+			if( p.x == 20 && p.y == 20 ) {
+				if( p.client != null ) {
+					sendMessage(p.client,'You stepped on a <font color="red">fire</font>');
+				}
 			}
 		}
-	}
 
+		if( p.x < 0 ) {
+			p.x = 0;	
+		}
+		else if( p.x >= w ) {
+			p.x = w-1;	
+		}
+		if( p.y < 0 ) {
+			p.y = 0;	
+		}
+		else if( p.y >= h ) {
+			p.y = h-1;	
+		}
 
-	if( playerX < 0 ) {
-		playerX = 0;	
-	}
-	else if( playerX >= w ) {
-		playerX = w-1;	
-	}
-	if( playerY < 0 ) {
-		playerY = 0;	
-	}
-	else if( playerY >= h ) {
-		playerY = h-1;	
-	}
-
-	desiredMovements = [];
+		p.desiredMovements = [];
 	
-	sendMapCharacter(socket,lastPlayerX,lastPlayerY);
+		sendMapCharacter(socket,lastPlayerX,lastPlayerY);
+		sendCharacter(socket,p.x,p.y,p.symbol,1,1,1);	
+	}
 	sendCharacter(socket,20,20,'^',Math.random(),0,0);	
-	sendCharacter(socket,playerX,playerY,playerSymbol,1,1,1);	
-	
 	setTimeout(gameLoop,1000/FPS);
 }
 
