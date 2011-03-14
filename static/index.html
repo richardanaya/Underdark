@@ -87,7 +87,7 @@ WASD - up,left,right,down G - pickup item
 	}
 	
 	engine.start(render_loop,60);
-	var name = 'Grey Elf';//prompt('What is your character\'s name');
+	var name = prompt('What is your character\'s name');
 	var socket = new io.Socket(null, {port: window.location.port, rememberTransport: false}); 
  	socket.connect();
 	socket.send('5|'+name);

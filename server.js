@@ -69,19 +69,17 @@ sendMapCharacter = function(client,x,y) {
 var socket = io.listen(server);
 
 socket.on('connection', function(client){
-  for(var i = 0 ; i < w*h; i++ ) {
-	client.send(CMD_SENDCHAR+'|'+i+"|"+symbols[i].charCodeAt(0)+'|'+colors_r[i]+"|"+colors_g[i]+"|"+colors_b[i]);
-  }
-  for(var i = 0, len = players.length; i < len ; i++ ) {
-    var p = players[i];
-    client.send(CMD_SENDCHAR+'|'+(p.y*w+p.x)+"|"+p.symbol.charCodeAt(0)+'|1|1|1');
-  }
 
-  client.on('disconnect', function(data){ 
+  client.on('disconnect', function(){
+	console.log('client disconnected');
+	console.log(client.toString()); 
   	for(var i = 0, len = players.length; i < len ; i++ ) {
     		var p = players[i];
 		if( p.client == client ) {
+			//redrawing the map where the character died
+			sendMapCharacter(socket,p.x,p.y);
 			players.splice(i,1);
+			break;
 		}
   	}
   });
@@ -123,6 +121,13 @@ socket.on('connection', function(client){
 	{
 		playerName = cmd[1];
 		players.push(new underdark.Player(client,playerName,0,0));
+  		for(var i = 0 ; i < w*h; i++ ) {
+			client.send(CMD_SENDCHAR+'|'+i+"|"+symbols[i].charCodeAt(0)+'|'+colors_r[i]+"|"+colors_g[i]+"|"+colors_b[i]);
+  		}
+  		for(var i = 0, len = players.length; i < len ; i++ ) {
+    			var p = players[i];
+			sendCharacter(socket,p.x,p.y,p.symbol,1,1,1);	
+  		}
 		sendMessage(client,'Welcome '+playerName);
 	}
   });
@@ -161,9 +166,11 @@ gameLoop = function() {
 		}
 
 		p.desiredMovements = [];
-	
-		sendMapCharacter(socket,lastPlayerX,lastPlayerY);
-		sendCharacter(socket,p.x,p.y,p.symbol,1,1,1);	
+
+		if( lastPlayerX != p.x || lastPlayerY != p.y ) {
+			sendMapCharacter(socket,lastPlayerX,lastPlayerY);
+			sendCharacter(socket,p.x,p.y,p.symbol,1,1,1);	
+		}	
 	}
 	sendCharacter(socket,20,20,'^',Math.random(),0,0);	
 	setTimeout(gameLoop,1000/FPS);
