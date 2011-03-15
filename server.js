@@ -19,28 +19,17 @@ var get = nerve.get;
 var app = [
 ];
 
-var CMD_SENDCHAR = 0;
-var CMD_MSG = 1;
-
 var server = nerve.create(app, {session_duration: 10000, document_root: './static'})
 server.listen(8868);
 
-var game = new underdark.Game();
 
 var socket = io.listen(server);
+var game = new underdark.Game(socket);
 
 socket.on('connection', function(client){
-
   client.on('disconnect', function(){
-  	for(var i = 0, len = game.players.length; i < len ; i++ ) {
-    		var p = game.players[i];
-		if( p.client == client ) {
-			//redrawing the map where the character died
-			game.sendMapCharacter(socket,p.x,p.y);
-			game.players.splice(i,1);
-			break;
-		}
-  	}
+	var p = game.getPlayerByClient(client);
+	game.removePlayerFromGame(p);
   });
  
   client.on('message', function(data){ 
@@ -80,7 +69,8 @@ socket.on('connection', function(client){
 	{
 		playerName = cmd[1];
 		game.players.push(new underdark.Player(client,playerName,0,0));
-  		for(var i = 0 ; i < game.map.w*game.map.h; i++ ) {
+		for(var i = 0 ; i < game.map.w*game.map.h; i++ ) {
+			var CMD_SENDCHAR = 0;
 			client.send(CMD_SENDCHAR+'|'+i+"|"+game.map.symbols[i].charCodeAt(0)+'|'+game.map.colors_r[i]+"|"+game.map.colors_g[i]+"|"+game.map.colors_b[i]);
   		}
   		for(var i = 0, len = game.players.length; i < len ; i++ ) {

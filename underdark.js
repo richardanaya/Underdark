@@ -36,9 +36,10 @@ Map.prototype.translate = function(x,y) {
 }
 
 
-var Game = function() {
+var Game = function(socket) {
 	this.map = new Map();
 	this.players = [];
+	this.socket = socket;
 }
 
 exports.Game = Game;
@@ -53,6 +54,18 @@ Game.prototype.getPlayerByClient = function(client) {
 	return null;
 }
 
+Game.prototype.removePlayerFromGame = function(player) {
+	var x,y;
+	for(var i=0,len=this.players.length;i<len;i++) {
+		if(this.players[i]==player) {
+			x = this.players[i].x;
+			y = this.players[i].y;
+			this.players.splice(i,1);
+			break;
+		}
+	}
+	this.sendMapCharacter(this.socket,x,y);	
+}
 
 var CMD_SENDCHAR = 0;
 var CMD_MSG = 1;
