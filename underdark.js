@@ -34,3 +34,39 @@ exports.Map = Map;
 Map.prototype.translate = function(x,y) {
 	return y*this.w+x;
 }
+
+
+var Game = function() {
+	this.map = new Map();
+	this.players = [];
+}
+
+exports.Game = Game;
+
+Game.prototype.getPlayerByClient = function(client) {
+	for(var i = 0, len = this.players.length; i < len ; i++ ) {
+		var p = this.players[i];
+		if( p.client == client ) {
+			return p;
+		}
+	}
+	return null;
+}
+
+
+var CMD_SENDCHAR = 0;
+var CMD_MSG = 1;
+
+
+Game.prototype.sendMessage = function(client,msg) {
+	client.send(CMD_MSG+'|'+msg);	
+}
+
+Game.prototype.sendCharacter = function(client,x,y,symbol,r,g,b) {
+  	client.broadcast(CMD_SENDCHAR+'|'+this.map.translate(x,y)+"|"+symbol.charCodeAt(0)+'|'+r+'|'+g+'|'+b);
+}
+
+Game.prototype.sendMapCharacter = function(client,x,y) {
+	var i = this.map.translate(x,y);
+	this.sendCharacter(client,x,y,this.map.symbols[i],this.map.colors_r[i],this.map.colors_g[i],this.map.colors_b[i]);	
+}
