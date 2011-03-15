@@ -35,16 +35,16 @@ socket.on('connection', function(client){
 
 	var cmd = data.split('|');
 	var cmd_type = parseFloat(cmd[0]);
-	if( (cmd_type == 0) && (p != null) ) {
+	if( (cmd_type == 0) && (p != null) ) {  //left
 		p.desireMove(-1,0);
 	}
-	else if( (cmd_type == 1) && (p != null) ) {
+	else if( (cmd_type == 1) && (p != null) ) { //up
 		p.desireMove(0,-1);
 	}
-	else if( (cmd_type == 2) && (p != null) ) {
+	else if( (cmd_type == 2) && (p != null) ) {  //right
 		p.desireMove(1,0);
 	}
-	else if( (cmd_type == 3) && (p != null) ) {
+	else if( (cmd_type == 3) && (p != null) ) { //down
 		p.desireMove(0,1);
 	}
 	else if( cmd_type == 4 ) //pickup an item 
