@@ -59,48 +59,11 @@ socket.on('connection', function(client){
   });
 }); 
 
+
 var FPS = 12.5;
 
-gameLoop = function() {
-	for(var j = 0, plen = game.players.length; j<plen; j++) {
-		var p = game.players[j];
-		//Process actions since last frame
-		var lastPlayerX = p.x;
-		var lastPlayerY = p.y;
-	
-		for(var i = 0,len=p.desiredMovements.length;i<len;i++) {
-			p.x += p.desiredMovements[i].x;
-			p.y += p.desiredMovements[i].y;
-			if( p.x == 20 && p.y == 20 ) {
-				if( p.client != null ) {
-					game.sendMessage(p.client,'You stepped on a <font color="red">fire</font>');
-				}
-			}
-		}
-
-		if( p.x < 0 ) {
-			p.x = 0;	
-		}
-		else if( p.x >= game.map.w ) {
-			p.x = w-1;	
-		}
-		if( p.y < 0 ) {
-			p.y = 0;	
-		}
-		else if( p.y >= game.map.h ) {
-			p.y = h-1;	
-		}
-
-		p.desiredMovements = [];
-
-		if( lastPlayerX != p.x || lastPlayerY != p.y ) {
-			game.sendMapCharacter(socket,lastPlayerX,lastPlayerY);
-			game.sendCharacter(socket,p.x,p.y,p.symbol,1,1,1);	
-		}	
-	}
-	game.sendCharacter(socket,20,20,'^',Math.random(),0,0);	
-	setTimeout(gameLoop,1000/FPS);
+loop = function() {
+	game.gameLoop();
+	setTimeout(loop,1000/FPS);
 }
-
-
-setTimeout(gameLoop,1000/FPS);
+setTimeout(loop,1000/FPS);

@@ -96,3 +96,44 @@ Game.prototype.loginPlayer = function(client,playerName) {
   	}
 	this.sendMessage(client,'Welcome '+playerName);
 }
+
+Game.prototype.gameLoop = function() {
+	for(var j = 0, plen = this.players.length; j<plen; j++) {
+		var p = this.players[j];
+		//Process actions since last frame
+		var lastPlayerX = p.x;
+		var lastPlayerY = p.y;
+	
+		for(var i = 0,len=p.desiredMovements.length;i<len;i++) {
+			p.x += p.desiredMovements[i].x;
+			p.y += p.desiredMovements[i].y;
+			if( p.x == 20 && p.y == 20 ) {
+				if( p.client != null ) {
+					this.sendMessage(p.client,'You stepped on a <font color="red">fire</font>');
+				}
+			}
+		}
+
+		if( p.x < 0 ) {
+			p.x = 0;	
+		}
+		else if( p.x >= this.map.w ) {
+			p.x = w-1;	
+		}
+		if( p.y < 0 ) {
+			p.y = 0;	
+		}
+		else if( p.y >= this.map.h ) {
+			p.y = h-1;	
+		}
+
+		p.desiredMovements = [];
+
+		if( lastPlayerX != p.x || lastPlayerY != p.y ) {
+			this.sendMapCharacter(this.socket,lastPlayerX,lastPlayerY);
+			this.sendCharacter(this.socket,p.x,p.y,p.symbol,1,1,1);	
+		}	
+	}
+	this.sendCharacter(this.socket,20,20,'^',Math.random(),0,0);	
+}
+
