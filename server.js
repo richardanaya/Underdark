@@ -22,19 +22,7 @@ var app = [
 var server = nerve.create(app, {session_duration: 10000, document_root: './static'})
 server.listen(8868);
 
-
-var w = 40;
-var h = 25;
-var symbols = [];
-var colors_r = [];
-var colors_g = [];
-var colors_b = [];
-for(var i = 0 ; i < w*h; i++ ) {
-	symbols[i] = '#';
-	colors_r[i] = 0;
-	colors_g[i] = Math.random();
-	colors_b[i] = 0;
-}
+var map = new underdark.Map();
 
 var players = [];
 
@@ -58,12 +46,12 @@ sendMessage = function(client,msg) {
 }
 
 sendCharacter = function(client,x,y,symbol,r,g,b) {
-  	client.broadcast(CMD_SENDCHAR+'|'+(y*w+x)+"|"+symbol.charCodeAt(0)+'|'+r+'|'+g+'|'+b);
+  	client.broadcast(CMD_SENDCHAR+'|'+map.translate(x,y)+"|"+symbol.charCodeAt(0)+'|'+r+'|'+g+'|'+b);
 }
 
 sendMapCharacter = function(client,x,y) {
-	var i = y*w+x;
-	sendCharacter(socket,x,y,symbols[i],colors_r[i],colors_g[i],colors_b[i]);	
+	var i = map.translate(x,y);
+	sendCharacter(socket,x,y,map.symbols[i],map.colors_r[i],map.colors_g[i],map.colors_b[i]);	
 }
 
 var socket = io.listen(server);
@@ -121,8 +109,8 @@ socket.on('connection', function(client){
 	{
 		playerName = cmd[1];
 		players.push(new underdark.Player(client,playerName,0,0));
-  		for(var i = 0 ; i < w*h; i++ ) {
-			client.send(CMD_SENDCHAR+'|'+i+"|"+symbols[i].charCodeAt(0)+'|'+colors_r[i]+"|"+colors_g[i]+"|"+colors_b[i]);
+  		for(var i = 0 ; i < map.w*map.h; i++ ) {
+			client.send(CMD_SENDCHAR+'|'+i+"|"+map.symbols[i].charCodeAt(0)+'|'+map.colors_r[i]+"|"+map.colors_g[i]+"|"+map.colors_b[i]);
   		}
   		for(var i = 0, len = players.length; i < len ; i++ ) {
     			var p = players[i];
@@ -155,13 +143,13 @@ gameLoop = function() {
 		if( p.x < 0 ) {
 			p.x = 0;	
 		}
-		else if( p.x >= w ) {
+		else if( p.x >= map.w ) {
 			p.x = w-1;	
 		}
 		if( p.y < 0 ) {
 			p.y = 0;	
 		}
-		else if( p.y >= h ) {
+		else if( p.y >= map.h ) {
 			p.y = h-1;	
 		}
 
