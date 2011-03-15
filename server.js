@@ -60,7 +60,7 @@ socket.on('connection', function(client){
 }); 
 
 
-var FPS = 4;
+var FPS = 12.5;
 
 loop = function() {
 	game.gameLoop();
