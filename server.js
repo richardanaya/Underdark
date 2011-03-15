@@ -54,16 +54,7 @@ socket.on('connection', function(client){
 	else if( cmd_type == 5 ) //login 
 	{
 		playerName = cmd[1];
-		game.players.push(new underdark.Player(client,playerName,0,0));
-		for(var i = 0 ; i < game.map.w*game.map.h; i++ ) {
-			var CMD_SENDCHAR = 0;
-			client.send(CMD_SENDCHAR+'|'+i+"|"+game.map.symbols[i].charCodeAt(0)+'|'+game.map.colors_r[i]+"|"+game.map.colors_g[i]+"|"+game.map.colors_b[i]);
-  		}
-  		for(var i = 0, len = game.players.length; i < len ; i++ ) {
-    			var p = game.players[i];
-			game.sendCharacter(socket,p.x,p.y,p.symbol,1,1,1);	
-  		}
-		game.sendMessage(client,'Welcome '+playerName);
+		game.loginPlayer(client,playerName);
 	}
   });
 }); 

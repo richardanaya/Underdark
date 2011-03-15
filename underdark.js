@@ -83,3 +83,16 @@ Game.prototype.sendMapCharacter = function(client,x,y) {
 	var i = this.map.translate(x,y);
 	this.sendCharacter(client,x,y,this.map.symbols[i],this.map.colors_r[i],this.map.colors_g[i],this.map.colors_b[i]);	
 }
+
+Game.prototype.loginPlayer = function(client,playerName) {
+	this.players.push(new Player(client,playerName,0,0));
+	var m = this.map;
+	for(var i = 0 ; i < m.w*m.h; i++ ) {
+		client.send(CMD_SENDCHAR+'|'+i+"|"+m.symbols[i].charCodeAt(0)+'|'+m.colors_r[i]+"|"+m.colors_g[i]+"|"+m.colors_b[i]);
+  	}
+  	for(var i = 0, len = this.players.length; i < len ; i++ ) {
+    		var p = this.players[i];
+		this.sendCharacter(this.socket,p.x,p.y,p.symbol,1,1,1);	
+  	}
+	this.sendMessage(client,'Welcome '+playerName);
+}
