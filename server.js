@@ -16,12 +16,10 @@ var render = function(res,template,data) {
 }
 
 var get = nerve.get;
-var app = [
-];
+var app = [];
 
 var server = nerve.create(app, {session_duration: 10000, document_root: './static'})
 server.listen(8868);
-
 
 var socket = io.listen(server);
 var game = new underdark.Game(socket);
@@ -37,29 +35,17 @@ socket.on('connection', function(client){
 
 	var cmd = data.split('|');
 	var cmd_type = parseFloat(cmd[0]);
-	if( cmd_type == 0 ) //move left 
-	{
-		if( p != null ) {
-			p.desireMove(-1,0);
-		}
+	if( (cmd_type == 0) && (p != null) ) {
+		p.desireMove(-1,0);
 	}
-	else if( cmd_type == 1 ) //move up 
-	{
-		if( p != null ) {
-			p.desireMove(0,-1);
-		}
+	else if( (cmd_type == 1) && (p != null) ) {
+		p.desireMove(0,-1);
 	}
-	else if( cmd_type == 2 ) //move right 
-	{
-		if( p != null ) {
-			p.desireMove(1,0);
-		}
+	else if( (cmd_type == 2) && (p != null) ) {
+		p.desireMove(1,0);
 	}
-	else if( cmd_type == 3 ) //move down 
-	{
-		if( p != null ) {
-			p.desireMove(0,1);
-		}
+	else if( (cmd_type == 3) && (p != null) ) {
+		p.desireMove(0,1);
 	}
 	else if( cmd_type == 4 ) //pickup an item 
 	{
