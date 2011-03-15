@@ -118,13 +118,13 @@ Game.prototype.gameLoop = function() {
 			p.x = 0;	
 		}
 		else if( p.x >= this.map.w ) {
-			p.x = w-1;	
+			p.x = this.map.w-1;	
 		}
 		if( p.y < 0 ) {
 			p.y = 0;	
 		}
 		else if( p.y >= this.map.h ) {
-			p.y = h-1;	
+			p.y = this.map.h-1;	
 		}
 
 		p.desiredMovements = [];
