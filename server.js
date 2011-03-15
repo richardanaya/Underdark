@@ -32,8 +32,6 @@ var socket = io.listen(server);
 socket.on('connection', function(client){
 
   client.on('disconnect', function(){
-	console.log('client disconnected');
-	console.log(client.toString()); 
   	for(var i = 0, len = game.players.length; i < len ; i++ ) {
     		var p = game.players[i];
 		if( p.client == client ) {
