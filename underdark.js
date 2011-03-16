@@ -17,6 +17,7 @@ Player.prototype.desireMove = function(x,y) {
 var Map = function() {
 	this.w = 40;
 	this.h = 25;
+	this.objects = [];
 	this.symbols = [];
 	this.colors_r = [];
 	this.colors_g = [];
@@ -35,11 +36,29 @@ Map.prototype.translate = function(x,y) {
 	return y*this.w+x;
 }
 
+Map.prototype.getObjectAt = function(x,y) {
+	for( var i = 0, len = this.objects.length; i<len; i++ ) {
+		var o = this.objects[i];
+		if(o.x == x && o.y == y) {
+			return o;
+		}
+	}
+	return null;
+}
 
 var Game = function(socket) {
 	this.map = new Map();
 	this.players = [];
 	this.socket = socket;
+	this.map.objects.push(new Fire(this,20,20));
+	this.map.objects.push(new Wall(this,20,19));
+	this.map.objects.push(new Wall(this,21,19));
+	this.map.objects.push(new Wall(this,19,19));
+	this.map.objects.push(new Wall(this,19,20));
+	this.map.objects.push(new Wall(this,19,21));
+	this.map.objects.push(new Wall(this,20,21));
+	this.map.objects.push(new Wall(this,21,21));
+	this.map.objects.push(new Door(this,21,20));
 }
 
 exports.Game = Game;
@@ -105,12 +124,18 @@ Game.prototype.gameLoop = function() {
 		var lastPlayerY = p.y;
 	
 		for(var i = 0,len=p.desiredMovements.length;i<len;i++) {
-			p.x += p.desiredMovements[i].x;
-			p.y += p.desiredMovements[i].y;
-			if( p.x == 20 && p.y == 20 ) {
-				if( p.client != null ) {
-					this.sendMessage(p.client,'You stepped on a <font color="red">fire</font>');
-				}
+			var nextX = p.x + p.desiredMovements[i].x;
+			var nextY = p.y + p.desiredMovements[i].y;
+			var o = this.map.getObjectAt(nextX,nextY);
+
+			if( (o == null) || (o.canEnter(p)) ) {
+				p.x = nextX;
+				p.y = nextY;
+				if( o != null ) { o.onEnter(p); }
+			}
+			else {
+				o.onCollide(p);
+				break;
 			}
 		}
 
@@ -131,9 +156,82 @@ Game.prototype.gameLoop = function() {
 
 		if( lastPlayerX != p.x || lastPlayerY != p.y ) {
 			this.sendMapCharacter(this.socket,lastPlayerX,lastPlayerY);
-			this.sendCharacter(this.socket,p.x,p.y,p.symbol,1,1,1);	
 		}	
 	}
-	this.sendCharacter(this.socket,20,20,'^',Math.random(),0,0);	
+
+	for(var i = 0; i < this.map.objects.length ; i++ ) {
+		var  o = this.map.objects[i];
+		this.sendCharacter(this.socket,o.x,o.y,o.symbol,o.r,o.g,o.b);	
+	}
+	for(var j = 0, plen = this.players.length; j<plen; j++) {
+		var p = this.players[j];
+		this.sendCharacter(this.socket,p.x,p.y,p.symbol,1,1,1);	
+	}
 }
 
+Wall = function(g,x,y) {
+	this.game = g;
+	this.symbol = 'O';
+	this.r = .7;
+	this.g = .7;
+	this.b = .7;
+	this.x = x;
+	this.y = y;
+}
+
+exports.Wall = Wall;
+
+Wall.prototype.canEnter = function(p) {
+	return false;
+}
+
+Wall.prototype.onCollide = function(p) {
+	this.game.sendMessage(p.client,"You bump into a wall");	
+}
+
+Fire = function(g,x,y) {
+	this.game = g;
+	this.symbol = '^'
+	this.r = 1;
+	this.g = 0;
+	this.b = 0;
+	this.x = x;
+	this.y = y;
+}
+
+exports.Fire = Fire;
+
+Fire.prototype.canEnter = function(p) {
+	return true;
+}
+
+Fire.prototype.onEnter = function(p) {
+	this.game.sendMessage(p.client,'You stepped on a <font color="red">fire</font>');	
+}
+
+Door = function(g,x,y) {
+	this.game = g;
+	this.symbol = '|';
+	this.r = .7;
+	this.g = .2;
+	this.b = .1;
+	this.x = x;
+	this.y = y;
+	this.isOpen = false;
+}
+
+exports.Door = Door;
+
+Door.prototype.canEnter = function(p) {
+	return this.isOpen;
+}
+
+Door.prototype.onCollide = function(p) {
+	this.isOpen = true;
+	this.symbol = '/';
+	this.game.sendMessage(p.client,"You open a door");	
+}
+
+Door.prototype.onEnter = function(p) {
+
+}
