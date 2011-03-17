@@ -79,8 +79,12 @@ WASD - up,left,right,down G - pickup item
 		if( fontRenderer.loaded ) {
 			for(var y = h-1; y >= 0 ; y--) {
 				for( var x = w-1; x >= 0; x--) {
-					engine.setTint(colors_r[y*w+x],colors_g[y*w+x],colors_b[y*w+x]);
-					fontRenderer.drawText(symbols[y*w+x],x*xd,y*yd);
+					var i = y*w+x;
+					var symbol = symbols[i];
+					engine.setTint(colors_r[i],colors_g[i],colors_b[i]);
+					var dim = fontRenderer.getStringDimensions(symbol);
+					var offsetX = Math.floor((xd-dim.width)/2);
+					fontRenderer.drawText(symbol,x*xd+offsetX,y*yd);
 				}
 			}
 		}
